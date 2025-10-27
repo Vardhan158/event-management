@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../Components/Navbar";
 
-// Import images
+// ✅ Import images (ensure these exist in /assets/)
 import Birthday from "../assets/Cake.png";
 import Anniversary from "../assets/Anniversary.png";
 import BabyShower from "../assets/BabyShower.jpg";
@@ -12,19 +12,22 @@ import Graduation from "../assets/Graduation.jpg";
 import Theme from "../assets/Theme.jpg";
 import Wedding from "../assets/Wedding.jpg";
 
+// ✅ Fallback image (optional)
+const FallbackImage = "https://via.placeholder.com/300x200?text=No+Image";
+
 const ServicesPage = () => {
   const navigate = useNavigate();
 
-  // Service data
+  // ✅ All services with images and pricing
   const services = [
-    { title: "Anniversary", img: Anniversary, slug: "anniversary", rating: 5, price: 1500, offerPrice: 1200 },
-    { title: "Weddings", img: Wedding, slug: "weddings", rating: 4, price: 5000, offerPrice: 4500 },
-    { title: "Corporate Events", img: Corporate, slug: "corporate-events", rating: 4, price: 2500, offerPrice: 2100 },
-    { title: "Theme Parties", img: Theme, slug: "theme-parties", rating: 5, price: 1800, offerPrice: 1600 },
-    { title: "Baby Showers", img: BabyShower, slug: "baby-showers", rating: 4, price: 2000, offerPrice: 1700 },
-    { title: "Graduation", img: Graduation, slug: "graduation", rating: 3, price: 1200, offerPrice: 1000 },
-    { title: "Birthday Party", img: Birthday, slug: "birthday-party", rating: 5, price: 1500, offerPrice: 1300 },
-    { title: "Camping", img: Camping, slug: "camping", rating: 4, price: 2200, offerPrice: 1900 },
+    { title: "Anniversary", img: Anniversary || FallbackImage, slug: "anniversary", rating: 5, price: 1500, offerPrice: 1200 },
+    { title: "Weddings", img: Wedding || FallbackImage, slug: "weddings", rating: 4, price: 5000, offerPrice: 4500 },
+    { title: "Corporate Events", img: Corporate || FallbackImage, slug: "corporate-events", rating: 4, price: 2500, offerPrice: 2100 },
+    { title: "Theme Parties", img: Theme || FallbackImage, slug: "theme-parties", rating: 5, price: 1800, offerPrice: 1600 },
+    { title: "Baby Showers", img: BabyShower || FallbackImage, slug: "baby-showers", rating: 4, price: 2000, offerPrice: 1700 },
+    { title: "Graduation", img: Graduation || FallbackImage, slug: "graduation", rating: 3, price: 1200, offerPrice: 1000 },
+    { title: "Birthday Party", img: Birthday || FallbackImage, slug: "birthday-party", rating: 5, price: 1500, offerPrice: 1300 },
+    { title: "Camping", img: Camping || FallbackImage, slug: "camping", rating: 4, price: 2200, offerPrice: 1900 },
   ];
 
   return (
@@ -37,13 +40,13 @@ const ServicesPage = () => {
             Our Services
           </h1>
 
-          {/* Grid */}
+          {/* ✅ Grid of Event Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
             {services.map((service) => (
               <EventCard
                 key={service.slug}
                 service={service}
-                onBook={() => navigate(`/event/${service.slug}`)} // ✅ navigate to event details
+                onBook={() => navigate(`/event/${service.slug}`)} // ✅ Navigate to EventDetails
               />
             ))}
           </div>
@@ -53,12 +56,18 @@ const ServicesPage = () => {
   );
 };
 
-// ✅ Reusable Event Card Component
+// ✅ Event Card Component
 const EventCard = ({ service, onBook }) => {
-  const [count, setCount] = useState(0);
+  const [hover, setHover] = useState(false);
 
   return (
-    <div className="border border-gray-200 rounded-xl bg-white shadow-sm hover:shadow-lg transition duration-300 overflow-hidden">
+    <div
+      className={`border border-gray-200 rounded-xl bg-white shadow-sm hover:shadow-lg transition duration-300 overflow-hidden ${
+        hover ? "scale-[1.02]" : ""
+      }`}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+    >
       {/* Image */}
       <div className="flex items-center justify-center bg-gray-50 relative cursor-pointer">
         <img
@@ -66,12 +75,15 @@ const EventCard = ({ service, onBook }) => {
           alt={service.title}
           className="object-cover w-full h-48 transition-transform duration-300 hover:scale-105"
           onClick={onBook}
+          onError={(e) => (e.target.src = FallbackImage)} // ✅ Handle missing image
         />
       </div>
 
       {/* Info */}
       <div className="p-4 text-gray-600">
-        <h3 className="text-lg font-semibold text-gray-800 mb-1">{service.title}</h3>
+        <h3 className="text-lg font-semibold text-gray-800 mb-1">
+          {service.title}
+        </h3>
 
         {/* Rating */}
         <div className="flex items-center gap-1 mb-2">
@@ -95,10 +107,12 @@ const EventCard = ({ service, onBook }) => {
         {/* Price */}
         <p className="text-indigo-500 font-semibold mb-3">
           ₹{service.offerPrice}{" "}
-          <span className="text-gray-400 line-through text-sm">₹{service.price}</span>
+          <span className="text-gray-400 line-through text-sm">
+            ₹{service.price}
+          </span>
         </p>
 
-        {/* Book Now button */}
+        {/* Button */}
         <button
           onClick={onBook}
           className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 rounded-lg transition"
