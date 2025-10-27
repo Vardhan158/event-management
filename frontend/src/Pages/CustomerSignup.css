@@ -1,0 +1,76 @@
+.signup-container {
+  min-height: 100vh;
+  background-image: url("/loginpage.jpg");
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.signup-box {
+  background-color: rgba(255, 255, 255, 0.66);
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 10px 20px rgba(3, 100, 70, 0.25);
+  max-width: 400px;
+  width: 100%;
+}
+
+.signup-box h2 {
+  text-align: center;
+  color: #044e38;
+  margin-bottom: 24px;
+}
+
+.signup-box input {
+  width: 100%;
+  padding: 12px 14px;
+  margin: 12px 0;
+  border-radius: 8px;
+  border: 1px solid #ffffff;
+  font-size: 16px;
+  transition: 0.3s;
+  background-color:cornsilk;
+}
+
+.signup-box input:focus {
+  border-color: #4bb793;
+  outline: none;
+  box-shadow: 0 0 6px rgba(4, 232, 186, 0.4);
+}
+
+.signup-box button {
+  width: 100%;
+  padding: 12px;
+  background-color: #053836;
+  color: white;
+  font-size: 16px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: background-color 0.3s ease;
+}
+
+.signup-box button:hover {
+  background-color: #096c5f;
+}
+
+.signup-box p {
+  margin-top: 16px;
+  text-align: center;
+  color: #08192c;
+  font-size: 18px;
+}
+
+.signup-box a {
+  color: #078870;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.signup-box a:hover {
+  text-decoration: underline;
+}

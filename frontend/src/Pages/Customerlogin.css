@@ -1,0 +1,72 @@
+.login-container {
+  min-height: 100vh;
+   background-image: url("/loginpage.jpg");
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.login-box {
+  background-color: rgba(224, 220, 220, 0.66);
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 10px 20px rgba(3, 100, 70, 0.25);
+  max-width: 400px;
+  width: 100%;
+}
+
+.login-box h2 {
+  text-align: center;
+  color: #044e38;
+  margin-bottom: 24px;
+}
+
+.login-box input {
+  width: 100%;
+  padding: 12px 14px;
+  margin: 12px 0;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+  transition: 0.3s;
+}
+
+.login-box input:focus {
+  border-color: #4bb793;
+  outline: none;
+  box-shadow: 0 0 6px rgba(8, 85, 69, 0.4);
+}
+
+.login-box button {
+  width: 100%;
+  padding: 12px;
+  background-color: #053836;
+  color: white;
+  font-size: 16px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: background-color 0.3s ease;
+}
+
+.login-box button:hover {
+  background-color: #096c5f;
+}
+
+.login-box p {
+  margin-top: 16px;
+  text-align: center;
+  color: #08192c;
+  cursor: pointer;
+  font-size: 20px;
+  transition: color 0.2s;
+
+}
+
+.login-box p:hover {
+  color: #078870;
+}
