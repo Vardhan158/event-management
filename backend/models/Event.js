@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const eventSchema = new mongoose.Schema({
   title: { type: String, required: true },
   slug: { type: String, required: true, unique: true }, // ✅ Added slug field
-  category: { type: String },
+  // category: { type: String },
   description: { type: String },
   location: { type: String },
   date: { type: Date },

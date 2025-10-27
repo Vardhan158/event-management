@@ -1,42 +1,44 @@
-import React, { useState } from "react";
-import Logo from "../assets/Logo.png";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import Logo from "../assets/Logo.png";
 
 const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
 
+  // Close menu when window is resized to desktop
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 768) setMenuOpen(false);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   return (
-    <header className="bg-gray-50/80 backdrop-blur-md shadow-sm fixed top-0 left-0 w-full z-50 border-b border-gray-200 h-[70px] flex items-center transition-all duration-300">
-      <div className="max-w-7xl mx-auto px-6 w-full flex justify-between items-center">
+    <header className="bg-gray-50/80 backdrop-blur-md shadow-sm fixed top-0 left-0 w-full z-50 border-b border-gray-200">
+      <div className="max-w-7xl mx-auto px-6 w-full flex justify-between items-center h-[70px]">
         {/* Logo */}
-        <a href="/" className="flex items-center gap-3">
-          <img
-            src={Logo}
-            alt="Eventza Logo"
-            className="w-10 h-10 drop-shadow-md"
-          />
+        <Link to="/" className="flex items-center gap-3">
+          <img src={Logo} alt="Eventza Logo" className="w-10 h-10 drop-shadow-md" />
           <span className="text-indigo-700 font-extrabold text-2xl tracking-wide">
             Eventza
           </span>
-        </a>
+        </Link>
 
         {/* Desktop Menu */}
         <nav className="hidden md:flex space-x-10 text-gray-700 font-medium text-lg">
-          <a href="/" className="hover:text-indigo-600 transition duration-200">
+          <Link to="/" className="hover:text-indigo-600 transition duration-200">
             Home
-          </a>
-          <a href="/about" className="hover:text-indigo-600 transition duration-200">
+          </Link>
+          <Link to="/about" className="hover:text-indigo-600 transition duration-200">
             About
-          </a>
-          <a href="/events" className="hover:text-indigo-600 transition duration-200">
-            Event Hub
-          </a>
-          <a href="/contact" className="hover:text-indigo-600 transition duration-200">
+          </Link>
+          <Link to="/dashboard" className="hover:text-indigo-600 transition duration-200">
+            Dashboard
+          </Link>
+          <Link to="/contact" className="hover:text-indigo-600 transition duration-200">
             Contact
-          </a>
-          <a href="/overview" className="hover:text-indigo-600 transition duration-200">
-            Overview
-          </a>
+          </Link>
         </nav>
 
         {/* Mobile Menu Button */}
@@ -68,26 +70,43 @@ const Navbar = () => {
         </button>
       </div>
 
-      {/* Mobile Dropdown */}
-      {menuOpen && (
-        <nav className="md:hidden bg-gray-50/95 backdrop-blur-md text-gray-800 px-7 py-4 space-y-4 shadow-lg border-t border-gray-200 rounded-b-2xl transition-all">
-          <a href="/" className="block hover:text-indigo-600 transition duration-200">
+      {/* Mobile Dropdown Menu */}
+      <div
+        className={`md:hidden bg-gray-50/95 backdrop-blur-md shadow-lg border-t border-gray-200 overflow-hidden transition-all duration-300 ${
+          menuOpen ? "max-h-80 opacity-100" : "max-h-0 opacity-0"
+        }`}
+      >
+        <nav className="flex flex-col px-7 py-4 space-y-4 text-gray-800 font-medium">
+          <Link
+            to="/"
+            onClick={() => setMenuOpen(false)}
+            className="hover:text-indigo-600 transition duration-200"
+          >
             Home
-          </a>
-          <a href="/about" className="block hover:text-indigo-600 transition duration-200">
+          </Link>
+          <Link
+            to="/about"
+            onClick={() => setMenuOpen(false)}
+            className="hover:text-indigo-600 transition duration-200"
+          >
             About
-          </a>
-          <a href="/events" className="block hover:text-indigo-600 transition duration-200">
-            Event Hub
-          </a>
-          <a href="/contact" className="block hover:text-indigo-600 transition duration-200">
+          </Link>
+          <Link
+            to="/dashboard"
+            onClick={() => setMenuOpen(false)}
+            className="hover:text-indigo-600 transition duration-200"
+          >
+            Dashboard
+          </Link>
+          <Link
+            to="/contact"
+            onClick={() => setMenuOpen(false)}
+            className="hover:text-indigo-600 transition duration-200"
+          >
             Contact
-          </a>
-          <Link to={"/overview"} className="block hover:text-indigo-600 transition duration-200">
-            Overview
           </Link>
         </nav>
-      )}
+      </div>
     </header>
   );
 };

@@ -6,6 +6,8 @@ import Overview from "./Components/Overview";
 import BookingConfirmation from "./Pages/BookingConfirmation";
 import Booking from "./Pages/Booking";
 import CustomerDashboard from "./Pages/CustomerDashboard";
+import ServicesPage from "./Pages/ServicesPage";
+import EventDetails from "./Pages/EventDetails"; // ✅ new import
 
 function App() {
   return (
@@ -13,10 +15,11 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<CustomerLogin />} />
         <Route path="/overview" element={<Overview />} />
-        {/* ✅ Use slug instead of eventId */}
         <Route path="/booking/:slug" element={<Booking />} />
         <Route path="/confirmation" element={<BookingConfirmation />} />
         <Route path="/dashboard" element={<CustomerDashboard />} />
+        <Route path="/service-page" element={<ServicesPage />} />
+        <Route path="/event/:slug" element={<EventDetails />} /> {/* ✅ new route */}
       </Routes>
   );
 }

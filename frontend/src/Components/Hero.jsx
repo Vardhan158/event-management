@@ -3,14 +3,19 @@ import { Link } from "react-router-dom";
 import Background from "../assets/Background.webp";
 
 const Hero = () => {
+  // Check if user is logged in (you can replace this logic as needed)
+  const isLoggedIn = Boolean(localStorage.getItem("customer")); 
+  // Or: const isLoggedIn = Boolean(localStorage.getItem("user"));
+
   return (
+    <>
     <section
       className="h-screen flex items-center justify-center text-center bg-cover bg-center relative"
       style={{
         backgroundImage: `url(${Background})`,
       }}
     >
-      {/* Overlay for soft blur effect */}
+      {/* Overlay */}
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
 
       {/* Content */}
@@ -29,15 +34,25 @@ const Hero = () => {
           Let us make your events truly unforgettable.
         </p>
 
-        {/* Login Button */}
-        <Link
-          to="/login"
-          className="inline-block bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-full font-semibold shadow-lg transition duration-300"
-        >
-          Login to Book
-        </Link>
+        {/* Dynamic Button */}
+        {isLoggedIn ? (
+          <Link
+            to="/service-page"
+            className="inline-block bg-yellow-400 hover:bg-yellow-500 text-gray-900 px-8 py-3 rounded-full font-semibold shadow-lg transition duration-300"
+          >
+            Book Services
+          </Link>
+        ) : (
+          <Link
+            to="/login"
+            className="inline-block bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-full font-semibold shadow-lg transition duration-300"
+          >
+            Login to Book
+          </Link>
+        )}
       </div>
     </section>
+    </>
   );
 };
 
