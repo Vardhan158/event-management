@@ -14,6 +14,9 @@ router.post("/", authenticate, bookingController.createBooking);
 // Get all bookings for the logged-in user
 router.get("/my", authenticate, bookingController.getMyBookings);
 
+// ✅ Get a single booking by ID (for customer dashboard view)
+router.get("/:id", authenticate, bookingController.getBookingById);
+
 // Get event by slug
 router.get("/events/slug/:slug", bookingController.getEventBySlug);
 

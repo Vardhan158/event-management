@@ -10,7 +10,6 @@ exports.createBooking = async (req, res) => {
   try {
     const { eventId, name, email, phone, eventDate, guests, notes, amountPaid } = req.body;
 
-    // ✅ Fetch event details to use title and price in email
     const event = await Event.findById(eventId);
     if (!event) {
       return res.status(404).json({ message: "Event not found" });
@@ -26,12 +25,12 @@ exports.createBooking = async (req, res) => {
       guests,
       notes,
       status: "booked",
-      amountPaid: amountPaid || event.price || 0, // ✅ Default to event price if not passed
+      amountPaid: amountPaid || event.price || 0,
+      paymentStatus: amountPaid > 0 ? "paid" : "pending", // ✅ Added to mark paid bookings
     });
 
     await booking.save();
 
-    // ✅ Send confirmation email with event title and formatted price
     const message = `
       <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f8fafc; border-radius: 10px;">
         <h2 style="color: #4f46e5;">🎉 Booking Confirmed!</h2>
@@ -68,7 +67,6 @@ exports.getMyBookings = async (req, res) => {
       .populate("event", "title date location price img")
       .sort({ createdAt: -1 });
 
-    // ✅ Wrap in object so frontend can access res.data.bookings
     res.status(200).json({ bookings });
   } catch (err) {
     console.error("Error in getMyBookings:", err);
@@ -94,7 +92,7 @@ exports.getAllBookings = async (req, res) => {
 };
 
 // ==================
-// Get single booking by ID (admin only)
+// ✅ Get single booking by ID (admin OR owner can access)
 // ==================
 exports.getBookingById = async (req, res) => {
   try {
@@ -103,6 +101,12 @@ exports.getBookingById = async (req, res) => {
       .populate("event", "title date location price img");
 
     if (!booking) return res.status(404).json({ message: "Booking not found" });
+
+    // ✅ If user is not admin and not owner of booking, deny access
+    if (req.user.role !== "admin" && booking.user._id.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Forbidden: You are not authorized to view this booking" });
+    }
+
     res.status(200).json(booking);
   } catch (err) {
     console.error("Error in getBookingById:", err);
@@ -133,7 +137,7 @@ exports.updateBooking = async (req, res) => {
       return res.status(401).json({ message: "Unauthorized: User not found" });
     }
 
-    const { status, amountPaid, notes, eventDate, guests } = req.body;
+    const { status, amountPaid, notes, eventDate, guests, paymentStatus } = req.body;
 
     const booking = await Booking.findById(req.params.id)
       .populate("user", "name email")
@@ -141,20 +145,19 @@ exports.updateBooking = async (req, res) => {
 
     if (!booking) return res.status(404).json({ message: "Booking not found" });
 
-    // Only admin or the same user can update
     if (req.user.role !== "admin" && !booking.user._id.equals(req.user._id)) {
       return res.status(403).json({ message: "Forbidden: Not authorized" });
     }
 
     if (status) booking.status = status;
     if (amountPaid) booking.amountPaid = amountPaid;
+    if (paymentStatus) booking.paymentStatus = paymentStatus; // ✅ ensure payment can be updated
     if (notes) booking.notes = notes;
     if (eventDate) booking.eventDate = new Date(eventDate);
     if (guests) booking.guests = Number(guests);
 
     await booking.save();
 
-    // ✅ Send confirmation email if status is confirmed
     if (status && status.toLowerCase() === "confirmed") {
       const message = `Hi ${booking.user.name},\n\nYour booking for "${booking.event.title}" has been confirmed!\n\nThank you for choosing us.`;
       await sendEmail(

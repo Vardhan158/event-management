@@ -3,57 +3,99 @@ const crypto = require("crypto");
 const Booking = require("../models/Booking");
 
 // Initialize Razorpay instance
-const instance = new Razorpay({
-  key_id: "rzp_test_GycCn6vlLqKeUM",
-  key_secret: "O9Cl2bu5DRx7i5rAswbZSoIm",
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID || "rzp_test_GycCn6vlLqKeUM",
+  key_secret: process.env.RAZORPAY_KEY_SECRET || "O9Cl2bu5DRx7i5rAswbZSoIm",
 });
 
-// Create Razorpay order
+// ✅ Create Razorpay Order
 exports.createOrder = async (req, res) => {
   try {
     const { amount } = req.body;
-
-    if (!amount) return res.status(400).json({ message: "Amount is required" });
+    if (!amount) {
+      return res.status(400).json({ success: false, message: "Amount is required" });
+    }
 
     const options = {
-      amount: amount * 100, // Convert to paise
+      amount: amount * 100, // Razorpay accepts amount in paise
       currency: "INR",
       receipt: `receipt_${Date.now()}`,
     };
 
-    const order = await instance.orders.create(options);
-    res.status(201).json(order);
-  } catch (err) {
-    console.error("Razorpay order creation failed:", err);
-    res.status(500).json({ message: "Payment order creation failed", error: err.message });
+    const order = await razorpay.orders.create(options);
+    res.status(201).json({
+      success: true,
+      id: order.id,
+      amount: order.amount,
+      currency: order.currency,
+    });
+  } catch (error) {
+    console.error("❌ Razorpay order creation failed:", error);
+    res.status(500).json({
+      success: false,
+      message: "Payment order creation failed",
+      error: error.message,
+    });
   }
 };
 
-// Verify payment
+// ✅ Verify Razorpay Payment (signature verification)
 exports.verifyPayment = async (req, res) => {
   try {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, bookingId, amount } = req.body;
+    const {
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+    } = req.body;
 
-    const body = razorpay_order_id + "|" + razorpay_payment_id;
-    const expectedSignature = crypto
-      .createHmac("sha256", process.env.RAZORPAY_SECRET)
-      .update(body.toString())
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      return res.status(400).json({ success: false, message: "Missing payment verification data" });
+    }
+
+    // Generate expected signature
+    const generated_signature = crypto
+      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET || "O9Cl2bu5DRx7i5rAswbZSoIm")
+      .update(`${razorpay_order_id}|${razorpay_payment_id}`)
       .digest("hex");
 
-    if (expectedSignature === razorpay_signature) {
-      // Update booking as paid
-      if (bookingId) {
-        await Booking.findByIdAndUpdate(bookingId, {
-          status: "Confirmed",
-          amountPaid: amount,
-        });
-      }
-      return res.status(200).json({ message: "Payment verified successfully" });
-    } else {
-      return res.status(400).json({ message: "Payment verification failed: Invalid signature" });
+    if (generated_signature !== razorpay_signature) {
+      return res.status(400).json({ success: false, message: "Invalid signature, payment failed" });
     }
-  } catch (err) {
-    console.error("Payment verification error:", err);
-    res.status(500).json({ message: "Server error during payment verification" });
+
+    // ✅ At this point payment is verified
+    res.status(200).json({
+      success: true,
+      message: "Payment verified successfully",
+      paymentId: razorpay_payment_id,
+    });
+  } catch (error) {
+    console.error("❌ Payment verification failed:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error verifying payment",
+      error: error.message,
+    });
+  }
+};
+
+// ✅ Fetch Payment Status for Logged-in User
+exports.getPaymentStatus = async (req, res) => {
+  try {
+    const userId = req.user.id; // from authenticate middleware
+
+    const bookings = await Booking.find({ user: userId })
+      .populate("event", "title price")
+      .select("paymentStatus amount event");
+
+    res.status(200).json({
+      success: true,
+      payments: bookings,
+    });
+  } catch (error) {
+    console.error("❌ Error fetching payment status:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error fetching payment status",
+    });
   }
 };

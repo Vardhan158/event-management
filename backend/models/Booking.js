@@ -1,17 +1,16 @@
 const mongoose = require("mongoose");
 
-// Booking Schema
 const bookingSchema = new mongoose.Schema(
   {
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true, // ✅ must be attached after authentication
+      required: true,
     },
     event: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Event",
-      required: true, // ✅ prevents null event errors
+      required: true,
     },
     name: {
       type: String,
@@ -31,7 +30,7 @@ const bookingSchema = new mongoose.Schema(
     },
     eventDate: {
       type: Date,
-      required: true, // ✅ must be passed from frontend
+      required: true,
     },
     bookingDate: {
       type: Date,
@@ -48,13 +47,24 @@ const bookingSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["pending", "confirmed", "rejected", "cancelled", "booked"], // ✅ all lowercase
+      enum: ["pending", "confirmed", "rejected", "cancelled", "booked"],
       default: "pending",
     },
     amountPaid: {
       type: Number,
       default: 0,
       min: 0,
+    },
+
+    // ✅ New fields for payment tracking
+    paymentStatus: {
+      type: String,
+      enum: ["pending", "paid", "failed"],
+      default: "pending",
+    },
+    paymentId: {
+      type: String, // Example: Razorpay/Stripe/Custom ID
+      default: null,
     },
   },
   { timestamps: true }
