@@ -28,6 +28,8 @@ const CustomerDashboard = () => {
 
     try {
       const decoded = jwtDecode(token);
+      console.log(decoded);
+      
       setUser({
         name: decoded.name || "Customer",
         email: decoded.email || "",

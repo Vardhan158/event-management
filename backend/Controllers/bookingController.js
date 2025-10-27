@@ -68,7 +68,8 @@ exports.getMyBookings = async (req, res) => {
       .populate("event", "title date location price img")
       .sort({ createdAt: -1 });
 
-    res.status(200).json(bookings);
+    // ✅ Wrap in object so frontend can access res.data.bookings
+    res.status(200).json({ bookings });
   } catch (err) {
     console.error("Error in getMyBookings:", err);
     res.status(500).json({ message: "Server error", error: err.message });
