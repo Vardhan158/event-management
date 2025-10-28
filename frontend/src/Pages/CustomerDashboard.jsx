@@ -24,24 +24,64 @@ const CustomerDashboard = () => {
   const navigate = useNavigate();
 
   const eventImages = {
-    Anniversary,
-    Weddings: Wedding,
-    "Corporate Events": Corporate,
-    "Theme Parties": Theme,
-    "Baby Showers": BabyShower,
-    Graduation,
-    "Birthday Party": Birthday,
-    Camping,
+    anniversary: Anniversary,
+    wedding: Wedding,
+    corporate: Corporate,
+    theme: Theme,
+    baby: BabyShower,
+    graduation: Graduation,
+    birthday: Birthday,
+    camping: Camping,
   };
 
-  const handleAvatarChange = (e) => {
+  // ✅ Flexible event image finder
+  const getEventImage = (title) => {
+    if (!title) return Birthday;
+    const lowerTitle = title.toLowerCase();
+
+    for (const [key, img] of Object.entries(eventImages)) {
+      if (lowerTitle.includes(key)) return img;
+    }
+
+    return Birthday;
+  };
+
+  // ✅ Handle avatar upload
+  const handleAvatarChange = async (e) => {
     const file = e.target.files[0];
-    if (file) {
-      const imgURL = URL.createObjectURL(file);
-      setUser({ ...user, avatar: imgURL });
+    if (!file) return;
+
+    const token = localStorage.getItem("customer");
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("avatar", file);
+
+    try {
+      toast.info("Uploading image...");
+      const res = await axios.post(
+        "http://localhost:5000/api/users/upload-avatar",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setUser((prev) => ({ ...prev, avatar: res.data.imageUrl }));
+      toast.success("Profile image updated successfully!");
+    } catch (err) {
+      console.error("Error uploading image:", err);
+      toast.error("Failed to upload image");
     }
   };
 
+  // ✅ Fetch user and dashboard data
   useEffect(() => {
     const token = localStorage.getItem("customer");
     if (!token) {
@@ -52,17 +92,32 @@ const CustomerDashboard = () => {
     let decoded;
     try {
       decoded = jwtDecode(token);
-      setUser({
-        name: decoded.name || "Customer",
-        email: decoded.email || "",
-        avatar: Birthday,
-      });
     } catch (err) {
       console.error("Invalid token:", err);
       localStorage.removeItem("customer");
       navigate("/login");
       return;
     }
+
+    const fetchUserProfile = async () => {
+      try {
+        const res = await axios.get("http://localhost:5000/api/users/me", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setUser({
+          name: res.data.name || decoded.name || "Customer",
+          email: res.data.email || decoded.email || "",
+          avatar: res.data.avatar || Birthday,
+        });
+      } catch (err) {
+        console.error("Error fetching user profile:", err);
+        setUser({
+          name: decoded.name || "Customer",
+          email: decoded.email || "",
+          avatar: Birthday,
+        });
+      }
+    };
 
     const fetchDashboardData = async () => {
       try {
@@ -93,6 +148,7 @@ const CustomerDashboard = () => {
       }
     };
 
+    fetchUserProfile();
     fetchDashboardData();
   }, [navigate]);
 
@@ -102,11 +158,6 @@ const CustomerDashboard = () => {
   const completedCount = bookings.filter(
     (b) => b.status?.toLowerCase() === "completed"
   ).length;
-
-  const getEventImage = (title) => {
-    if (!title) return Birthday;
-    return eventImages[title] || Birthday;
-  };
 
   return (
     <div className="bg-gray-100 min-h-screen flex flex-col relative">
@@ -218,7 +269,9 @@ const CustomerDashboard = () => {
                       <div
                         key={booking._id}
                         className="rounded-xl overflow-hidden shadow-lg group cursor-pointer bg-white"
-                        onClick={() => navigate(`/booking-details/${booking._id}`)}
+                        onClick={() =>
+                          navigate(`/booking-details/${booking._id}`)
+                        }
                       >
                         <img
                           src={getEventImage(event.title)}

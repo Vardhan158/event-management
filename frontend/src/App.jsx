@@ -11,6 +11,9 @@ import CustomerDashboard from "./Pages/CustomerDashboard";
 import ServicesPage from "./Pages/ServicesPage";
 import EventDetails from "./Pages/EventDetails";
 import BookingDetails from "./Pages/BookingDetails";
+import About from "./Pages/About";
+import Contact from "./Pages/Contact";
+import AdminDashboard from "./Pages/AdminDashboard"; // ✅ add this line
 
 function App() {
   return (
@@ -22,6 +25,8 @@ function App() {
       {/* ✅ Info Pages */}
       <Route path="/overview" element={<Overview />} />
       <Route path="/service-page" element={<ServicesPage />} />
+      <Route path="/about" element={<About />} />
+      <Route path="/contact" element={<Contact />} />
 
       {/* ✅ Event / Booking */}
       <Route path="/event/:slug" element={<EventDetails />} />
@@ -31,6 +36,9 @@ function App() {
 
       {/* ✅ Customer Dashboard */}
       <Route path="/dashboard" element={<CustomerDashboard />} />
+
+      {/* ✅ Admin Dashboard */}
+      <Route path="/adminDashboard" element={<AdminDashboard />} />  {/* <-- added route */}
     </Routes>
   );
 }

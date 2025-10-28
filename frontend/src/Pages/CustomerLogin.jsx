@@ -12,7 +12,7 @@ const CustomerLogin = () => {
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const navigate = useNavigate();
 
-  const handleChange = (e) => 
+  const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
@@ -22,7 +22,6 @@ const CustomerLogin = () => {
       ? "http://localhost:5000/api/auth/login"
       : "http://localhost:5000/api/auth/signup";
 
-    // ✅ Send only the necessary fields
     const payload = isLogin
       ? { email: form.email, password: form.password }
       : { name: form.name, email: form.email, password: form.password };
@@ -32,21 +31,28 @@ const CustomerLogin = () => {
 
       if (isLogin) {
         const token = response.data.token;
-        localStorage.setItem("customer", token);
+        localStorage.setItem("userToken", token);
 
         const decoded = jwtDecode(token);
         console.log("Decoded token:", decoded);
 
         toast.success("Login successful!");
+
+        // ✅ Role-based redirect
         setTimeout(() => {
-          navigate("/dashboard");
-        }, 2000);
+          if (decoded.role === "admin") {
+            localStorage.setItem("admin", token);
+            navigate("/adminDashboard");
+          } else {
+            localStorage.setItem("customer", token);
+            navigate("/dashboard");
+          }
+        }, 1500);
       } else {
         toast.success("Registration successful! You can now login.");
         setIsLogin(true);
       }
 
-      // Reset form fields
       setForm({ name: "", email: "", password: "" });
     } catch (err) {
       console.error("❌ Login/Register Error:", err);
@@ -60,7 +66,7 @@ const CustomerLogin = () => {
       style={{ backgroundImage: `url(${BookingBG})` }}
     >
       <div className="login-box">
-        <h2>{isLogin ? "Customer Login" : "Customer Register"}</h2>
+        <h2>{isLogin ? "Login" : "Register"}</h2>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           {!isLogin && (

@@ -12,6 +12,8 @@ const eventRoutes = require("./routes/eventRoutes");
 const bookingRoutes = require("./routes/bookingRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
 const reviewRoutes = require("./routes/reviewRoutes");
+const userRoutes = require("./routes/userRoutes");
+const contactRoutes = require("./routes/contactRoutes");
 
 const app = express();
 
@@ -27,6 +29,8 @@ app.use("/api/events", eventRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/review", reviewRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/contact", contactRoutes);
 
 // Root
 app.get("/", (req, res) => res.send("Eventza API is running"));

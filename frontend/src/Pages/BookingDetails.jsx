@@ -23,7 +23,7 @@ const BookingDetails = () => {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
-        setBooking(res.data.booking);
+        setBooking(res.data);
       } catch (err) {
         console.error("Error fetching booking:", err);
       }
@@ -32,6 +32,16 @@ const BookingDetails = () => {
     fetchBooking();
   }, [id, navigate]);
 
+  // ✅ Helper to format date
+  const formatDate = (dateString) => {
+    if (!dateString) return "Not specified";
+    return new Date(dateString).toLocaleDateString("en-IN", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
   if (!booking)
     return (
       <div>
@@ -39,6 +49,13 @@ const BookingDetails = () => {
         <p className="text-center mt-20 text-gray-600">Loading...</p>
       </div>
     );
+
+  // ✅ Safely get location (from event or booking)
+  const location =
+    booking.event?.location ||
+    booking.event?.venue ||
+    booking.venue ||
+    "Not specified";
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -52,10 +69,10 @@ const BookingDetails = () => {
             <strong>Event Name:</strong> {booking.event?.title}
           </p>
           <p>
-            <strong>Date:</strong> {booking.eventDate}
+            <strong>Date:</strong> {formatDate(booking.eventDate)}
           </p>
           <p>
-            <strong>Venue:</strong> {booking.venue || "Not specified"}
+            <strong>Location:</strong> {location}
           </p>
           <p>
             <strong>Status:</strong>{" "}

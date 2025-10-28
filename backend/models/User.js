@@ -20,10 +20,16 @@ const userSchema = new mongoose.Schema(
     },
     role: { 
       type: String, 
-      enum: ["customer", "admin"], // ✅ allow "customer" and "admin"
-      default: "customer"           // ✅ default role for signup
+      enum: ["customer", "admin"], 
+      default: "customer" 
     },
-  }, 
+
+    // ✅ Add this field to store avatar URL
+    avatar: {
+      type: String,
+      default: "https://res.cloudinary.com/demo/image/upload/v1690000000/default-avatar.png"
+    },
+  },
   { timestamps: true }
 );
 
