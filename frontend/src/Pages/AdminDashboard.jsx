@@ -24,9 +24,10 @@ const AdminDashboard = () => {
   const [payments, setPayments] = useState([]);
   const [showAddEvent, setShowAddEvent] = useState(false);
   const [showEditEvent, setShowEditEvent] = useState(false);
+  const [loadingBookingId, setLoadingBookingId] = useState(null);
   const [newEvent, setNewEvent] = useState({
     title: "",
-    description: "", // ✅ Added description
+    description: "",
     price: "",
     location: "",
     date: "",
@@ -42,19 +43,12 @@ const AdminDashboard = () => {
         return;
       }
 
+      const headers = { Authorization: `Bearer ${token}` };
       const [usersRes, eventsRes, bookingsRes, paymentsRes] = await Promise.all([
-        axios.get("http://localhost:5000/api/admin/users", {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        axios.get("http://localhost:5000/api/admin/events", {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        axios.get("http://localhost:5000/api/admin/bookings", {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        axios.get("http://localhost:5000/api/admin/payments", {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
+        axios.get("http://localhost:5000/api/admin/users", { headers }),
+        axios.get("http://localhost:5000/api/admin/events", { headers }),
+        axios.get("http://localhost:5000/api/admin/bookings", { headers }),
+        axios.get("http://localhost:5000/api/admin/payments", { headers }),
       ]);
 
       setUsers(usersRes.data || []);
@@ -99,28 +93,62 @@ const AdminDashboard = () => {
   };
 
   // ✅ Add Event
-  const handleAddEvent = async (e) => {
-    e.preventDefault();
-    const token = localStorage.getItem("admin");
-    try {
-      await axios.post("http://localhost:5000/api/admin/events", newEvent, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      toast.success("Event added successfully!");
-      setShowAddEvent(false);
-      setNewEvent({
-        title: "",
-        description: "",
-        price: "",
-        location: "",
-        date: "",
-      });
-      fetchData();
-    } catch (err) {
-      console.error("Add event error:", err);
-      toast.error("Failed to add event");
+const handleAddEvent = async (e) => {
+  e.preventDefault();
+
+  const token = localStorage.getItem("admin");
+  if (!token) {
+    toast.error("Unauthorized! Please log in again.");
+    return;
+  }
+
+  try {
+    const formData = new FormData();
+    formData.append("title", newEvent.title);
+    formData.append("description", newEvent.description);
+    formData.append("price", newEvent.price);
+    formData.append("location", newEvent.location);
+    formData.append("date", newEvent.date);
+
+    // ✅ Append only if image file exists
+    if (newEvent.image instanceof File) {
+      formData.append("image", newEvent.image);
     }
-  };
+
+    toast.info("📤 Uploading event to Cloudinary...");
+
+    const res = await axios.post(
+      "http://localhost:5000/api/admin/events",
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+
+    toast.success("🎉 Event added successfully!");
+    setShowAddEvent(false);
+
+    // ✅ Reset form
+    setNewEvent({
+      title: "",
+      description: "",
+      price: "",
+      location: "",
+      date: "",
+      image: null,
+    });
+
+    // ✅ Refresh event list
+    fetchData();
+  } catch (err) {
+    console.error("❌ Add event error:", err.response?.data || err.message);
+    toast.error("Failed to add event. Please try again.");
+  }
+};
+
 
   // ✅ Edit Event
   const handleEditEvent = async (e) => {
@@ -174,21 +202,44 @@ const AdminDashboard = () => {
     }
   };
 
-  // ✅ Confirm Booking
-  const handleConfirmBooking = async (id) => {
+  // ✅ Update Booking Status (confirm/reject)
+  const handleStatusChange = async (bookingId, newStatus) => {
     const token = localStorage.getItem("admin");
-    try {
-      await axios.put(
-        `http://localhost:5000/api/admin/booking/${id}/confirm`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      toast.success("Booking confirmed!");
-      fetchData();
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to confirm booking");
+    if (!token) {
+      toast.error("Unauthorized! Please login again.");
+      return;
     }
+
+    try {
+      setLoadingBookingId(bookingId); // show spinner/loading
+      const headers = { Authorization: `Bearer ${token}` };
+
+      // ✅ Update status properly
+      const res = await axios.put(
+        `http://localhost:5000/api/admin/bookings/${bookingId}/status`,
+        { status: newStatus },
+        { headers }
+      );
+
+      toast.success(`Booking ${newStatus} successfully!`);
+
+      // ✅ Update local state without refetching everything
+      setBookings((prev) =>
+        prev.map((b) =>
+          b._id === bookingId ? { ...b, status: newStatus } : b
+        )
+      );
+    } catch (err) {
+      console.error("Error updating booking status:", err);
+      toast.error("Failed to update booking status");
+    } finally {
+      setLoadingBookingId(null);
+    }
+  };
+
+  const fadeInUp = {
+    hidden: { opacity: 0, y: 30 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
   };
 
   return (
@@ -201,21 +252,19 @@ const AdminDashboard = () => {
           </h2>
 
           <ul className="flex flex-col gap-4">
-            {["overview", "users", "events", "bookings", "payments"].map(
-              (tab) => (
-                <li
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`cursor-pointer p-2 rounded-lg text-center transition-all duration-300 ${
-                    activeTab === tab
-                      ? "bg-indigo-500 text-white scale-105"
-                      : "hover:bg-indigo-100 text-gray-700"
-                  } capitalize`}
-                >
-                  {tab}
-                </li>
-              )
-            )}
+            {["overview", "users", "events", "bookings", "payments"].map((tab) => (
+              <li
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`cursor-pointer p-2 rounded-lg text-center transition-all duration-300 ${
+                  activeTab === tab
+                    ? "bg-indigo-500 text-white scale-105"
+                    : "hover:bg-indigo-100 text-gray-700"
+                } capitalize`}
+              >
+                {tab}
+              </li>
+            ))}
           </ul>
 
           <button
@@ -231,7 +280,7 @@ const AdminDashboard = () => {
 
         {/* Main Content */}
         <main className="flex-1 p-8 ml-64 overflow-y-auto">
-          {/* Overview Section */}
+          {/* ✅ Overview Section */}
           {activeTab === "overview" && (
             <motion.div
               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"
@@ -259,7 +308,7 @@ const AdminDashboard = () => {
             </motion.div>
           )}
 
-          {/* Users Table */}
+          {/* ✅ Users Table */}
           {activeTab === "users" && (
             <motion.div initial="hidden" animate="visible" variants={fadeInUp}>
               <h2 className="text-3xl font-bold text-indigo-600 mb-6">Users</h2>
@@ -295,7 +344,7 @@ const AdminDashboard = () => {
             </motion.div>
           )}
 
-          {/* Events Table */}
+          {/* ✅ Events Table */}
           {activeTab === "events" && (
             <motion.div initial="hidden" animate="visible" variants={fadeInUp}>
               <div className="flex justify-between items-center mb-6">
@@ -351,7 +400,7 @@ const AdminDashboard = () => {
                 </table>
               </div>
 
-              {/* Add/Edit Modals */}
+              {/* ✅ Add/Edit Event Modals */}
               {showAddEvent && (
                 <EventModal
                   title="Add New Event"
@@ -373,7 +422,7 @@ const AdminDashboard = () => {
             </motion.div>
           )}
 
-          {/* Bookings & Payments sections remain unchanged */}
+          {/* ✅ Bookings Table */}
           {activeTab === "bookings" && (
             <motion.div initial="hidden" animate="visible" variants={fadeInUp}>
               <h2 className="text-3xl font-bold text-indigo-600 mb-6">Bookings</h2>
@@ -394,14 +443,15 @@ const AdminDashboard = () => {
                         <td className="p-3">{b.user?.name || "N/A"}</td>
                         <td className="p-3 capitalize">{b.status}</td>
                         <td className="p-3">
-                          {b.status === "pending" && (
-                            <button
-                              onClick={() => handleConfirmBooking(b._id)}
-                              className="bg-green-500 text-white px-3 py-1 rounded-md hover:bg-green-600"
-                            >
-                              Confirm
-                            </button>
-                          )}
+                          <select
+                            value={b.status}
+                            onChange={(e) => handleStatusChange(b._id, e.target.value)}
+                            className="border border-gray-300 rounded-md p-1 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                          >
+                            <option value="pending">Pending</option>
+                            <option value="confirmed">Confirmed</option>
+                            <option value="rejected">Rejected</option>
+                          </select>
                         </td>
                       </tr>
                     ))}
@@ -411,6 +461,7 @@ const AdminDashboard = () => {
             </motion.div>
           )}
 
+          {/* ✅ Payments Table */}
           {activeTab === "payments" && (
             <motion.div initial="hidden" animate="visible" variants={fadeInUp}>
               <h2 className="text-3xl font-bold text-indigo-600 mb-6">Payments</h2>
@@ -438,6 +489,7 @@ const AdminDashboard = () => {
               </div>
             </motion.div>
           )}
+
           <ToastContainer position="top-center" autoClose={1500} />
         </main>
       </div>
@@ -446,8 +498,9 @@ const AdminDashboard = () => {
 };
 
 // ✅ Reusable Modal for Add/Edit Event
+// ✅ Reusable Modal for Add/Edit Event
 const EventModal = ({ title, eventData, setEventData, onClose, onSubmit }) => (
-  <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50">
+  <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50 z-50">
     <motion.div
       initial={{ scale: 0.8, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
@@ -457,64 +510,99 @@ const EventModal = ({ title, eventData, setEventData, onClose, onSubmit }) => (
         {title}
       </h3>
       <form onSubmit={onSubmit} className="space-y-3">
-        <input
-          type="text"
-          placeholder="Title"
-          value={eventData.title}
-          onChange={(e) => setEventData({ ...eventData, title: e.target.value })}
-          required
-          className="w-full border p-2 rounded-md"
-        />
-        <textarea
-          placeholder="Description"
-          value={eventData.description || ""}
-          onChange={(e) =>
-            setEventData({ ...eventData, description: e.target.value })
-          }
-          required
-          className="w-full border p-2 rounded-md"
-        />
-        <input
-          type="number"
-          placeholder="Price"
-          value={eventData.price}
-          onChange={(e) => setEventData({ ...eventData, price: e.target.value })}
-          required
-          className="w-full border p-2 rounded-md"
-        />
-        <input
-          type="text"
-          placeholder="Location"
-          value={eventData.location}
-          onChange={(e) => setEventData({ ...eventData, location: e.target.value })}
-          required
-          className="w-full border p-2 rounded-md"
-        />
-        <input
-          type="date"
-          value={eventData.date ? eventData.date.split("T")[0] : ""}
-          onChange={(e) => setEventData({ ...eventData, date: e.target.value })}
-          required
-          className="w-full border p-2 rounded-md"
-        />
-        <div className="flex justify-end gap-3 mt-4">
-          <button
-            type="button"
-            onClick={onClose}
-            className="bg-gray-400 text-white px-4 py-2 rounded-lg hover:bg-gray-500"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            className="bg-indigo-500 text-white px-4 py-2 rounded-lg hover:bg-indigo-600"
-          >
-            Save
-          </button>
-        </div>
-      </form>
-    </motion.div>
+  <input
+    type="text"
+    placeholder="Title"
+    value={eventData.title}
+    onChange={(e) => setEventData({ ...eventData, title: e.target.value })}
+    required
+    className="w-full border p-2 rounded-md"
+  />
+  <textarea
+    placeholder="Description"
+    value={eventData.description || ""}
+    onChange={(e) => setEventData({ ...eventData, description: e.target.value })}
+    required
+    className="w-full border p-2 rounded-md"
+  />
+  <input
+    type="number"
+    placeholder="Price"
+    value={eventData.price}
+    onChange={(e) => setEventData({ ...eventData, price: e.target.value })}
+    required
+    className="w-full border p-2 rounded-md"
+  />
+  <input
+    type="text"
+    placeholder="Location"
+    value={eventData.location}
+    onChange={(e) => setEventData({ ...eventData, location: e.target.value })}
+    required
+    className="w-full border p-2 rounded-md"
+  />
+  <input
+    type="date"
+    value={eventData.date ? eventData.date.split("T")[0] : ""}
+    onChange={(e) => setEventData({ ...eventData, date: e.target.value })}
+    required
+    className="w-full border p-2 rounded-md"
+  />
+
+  {/* ✅ Image Upload */}
+{/* Image upload */}
+<input
+  type="file"
+  accept="image/*"
+  onChange={(e) => {
+    const file = e.target.files[0];
+    setEventData({ ...eventData, image: file });
+  }}
+  className="w-full border p-2 rounded-md"
+/>
+
+{/* Image Preview */}
+{eventData.image && (
+  <img
+    src={
+      typeof eventData.image === "object"
+        ? URL.createObjectURL(eventData.image) // local preview
+        : eventData.image // cloudinary URL
+    }
+    alt="Preview"
+    className="w-full h-40 object-cover rounded-md"
+  />
+)}
+
+
+   {/* ✅ Image Preview for already uploaded images (edit mode) */}
+  {eventData.image && typeof eventData.image === "string" && (
+    <img
+      src={`http://localhost:5000${eventData.image}`}
+      alt="Event"
+      className="w-full h-40 object-cover rounded-md"
+    />
+  )}
+
+  <div className="flex justify-end gap-3 mt-4">
+    <button
+      type="button"
+      onClick={onClose}
+      className="px-4 py-2 bg-gray-400 text-white rounded-md hover:bg-gray-500"
+    >
+      Cancel
+    </button>
+    <button
+      type="submit"
+      className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+    >
+      Save
+    </button>
   </div>
+</form>
+</motion.div>
+</div>
 );
+
 
 export default AdminDashboard;

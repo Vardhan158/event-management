@@ -159,7 +159,7 @@ const About = () => {
           unforgettable celebrations.
         </p>
         <button
-          onClick={() => (window.location.href = "/events")}
+          onClick={() => (window.location.href = "/service-page")}
           className="bg-white text-indigo-600 font-semibold px-8 py-3 rounded-lg shadow-lg hover:bg-indigo-100 transition-all"
         >
           Explore Events
