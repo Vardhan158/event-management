@@ -4,8 +4,8 @@ const Booking = require("../models/Booking");
 
 // Initialize Razorpay instance
 const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID || "rzp_test_GycCn6vlLqKeUM",
-  key_secret: process.env.RAZORPAY_KEY_SECRET || "O9Cl2bu5DRx7i5rAswbZSoIm",
+  key_id: process.env.RAZORPAY_KEY_ID || "rzp_test_RYx3p2TaCH508s",
+  key_secret: process.env.RAZORPAY_KEY_SECRET || "So29uDOGlBhXVhFc7DCUeRL5",
 });
 
 // ✅ Create Razorpay Order
@@ -54,7 +54,7 @@ exports.verifyPayment = async (req, res) => {
 
     // Generate expected signature
     const generated_signature = crypto
-      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET || "O9Cl2bu5DRx7i5rAswbZSoIm")
+      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET || "So29uDOGlBhXVhFc7DCUeRL5")
       .update(`${razorpay_order_id}|${razorpay_payment_id}`)
       .digest("hex");
 

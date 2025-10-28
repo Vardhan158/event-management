@@ -52,7 +52,7 @@ const ServicesPage = () => {
 
             ratingMap[event._id] = avgRating;
           } catch (err) {
-            console.warn(`No reviews for event ${event._id}`);
+            console.warn(`No reviews for event ${event._id}`,err);
             ratingMap[event._id] = 0;
           }
         })

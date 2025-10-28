@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
+import { motion } from "framer-motion";
 import "react-toastify/dist/ReactToastify.css";
 import Navbar from "../Components/Navbar";
 
@@ -25,7 +26,7 @@ const serviceImages = {
   camping: Camping,
 };
 
-// ✅ Helper to load Razorpay
+// ✅ Load Razorpay
 const loadRazorpayScript = () =>
   new Promise((resolve) => {
     const script = document.createElement("script");
@@ -42,6 +43,7 @@ const EventDetails = () => {
   const [event, setEvent] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showBookingLoader, setShowBookingLoader] = useState(false);
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -86,7 +88,7 @@ const EventDetails = () => {
     fetchEvent();
   }, [slug]);
 
-  // ✅ Fetch reviews for the event
+  // ✅ Fetch reviews for event
   useEffect(() => {
     if (!event?._id) return;
 
@@ -129,7 +131,7 @@ const EventDetails = () => {
       );
 
       const options = {
-        key: "rzp_test_GycCn6vlLqKeUM",
+        key: "rzp_test_RYx3p2TaCH508s",
         amount: order.amount,
         currency: "INR",
         name: "Event Booking",
@@ -148,6 +150,8 @@ const EventDetails = () => {
             );
 
             if (verifyRes.data.success) {
+              setShowBookingLoader(true);
+
               await axios.post(
                 "http://localhost:5000/api/bookings",
                 {
@@ -167,7 +171,11 @@ const EventDetails = () => {
 
               toast.success("🎉 Booking confirmed & payment successful!");
               setShowForm(false);
-              setTimeout(() => navigate("/dashboard"), 2000);
+
+              setTimeout(() => {
+                setShowBookingLoader(false);
+                navigate("/dashboard");
+              }, 2500);
             } else {
               toast.error("Payment verification failed!");
             }
@@ -206,7 +214,7 @@ const EventDetails = () => {
       <Navbar />
       <ToastContainer position="top-center" autoClose={1500} />
 
-      {/* ✅ Event Info Section */}
+      {/* ✅ Event Info */}
       <section className="min-h-screen bg-gray-50 py-24 px-6">
         <div className="max-w-5xl mx-auto">
           <img
@@ -230,7 +238,7 @@ const EventDetails = () => {
             Book Now
           </button>
 
-          {/* ✅ Reviews Section */}
+          {/* ✅ Reviews */}
           <div className="mt-10 bg-white shadow-md rounded-2xl p-6">
             <h2 className="text-2xl font-semibold text-indigo-600 mb-4">
               User Reviews
@@ -267,7 +275,7 @@ const EventDetails = () => {
         </div>
       </section>
 
-      {/* ✅ Booking Modal */}
+      {/* ✅ Booking Form */}
       {showForm && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-2xl relative overflow-y-auto max-h-[90vh]">
@@ -356,6 +364,63 @@ const EventDetails = () => {
             </form>
           </div>
         </div>
+      )}
+
+      {/* 💳 Glassmorphic Animated Payment Loader */}
+      {showBookingLoader && (
+        <motion.div
+          className="fixed inset-0 z-50 flex flex-col items-center justify-center backdrop-blur-2xl bg-gradient-to-b from-indigo-800/40 to-purple-900/30"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+        >
+          {/* Animated Card */}
+          <motion.div
+            className="relative w-64 h-40 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-2xl shadow-2xl overflow-hidden"
+            initial={{ rotateY: 0 }}
+            animate={{ rotateY: 360 }}
+            transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
+          >
+            <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
+            <div className="absolute top-6 left-6 text-white font-semibold text-lg tracking-wide">
+              💳 Event Payment
+            </div>
+            <div className="absolute bottom-6 left-6 text-white text-sm tracking-widest">
+              Processing Securely...
+            </div>
+          </motion.div>
+
+          {/* Floating Coins */}
+          <div className="relative mt-16 w-full flex justify-center">
+            {[...Array(5)].map((_, i) => (
+              <motion.div
+                key={i}
+                className="absolute w-6 h-6 bg-yellow-400 rounded-full shadow-lg"
+                initial={{ y: 0, opacity: 0 }}
+                animate={{
+                  y: [0, -150, 0],
+                  opacity: [0, 1, 0],
+                  x: [0, (i - 2) * 40, 0],
+                }}
+                transition={{
+                  duration: 2 + i * 0.3,
+                  repeat: Infinity,
+                  delay: i * 0.2,
+                  ease: "easeInOut",
+                }}
+              ></motion.div>
+            ))}
+          </div>
+
+          {/* Loading Text */}
+          <motion.p
+            className="mt-28 text-white text-2xl font-semibold tracking-wide drop-shadow-md"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: [0.5, 1, 0.5] }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+          >
+            Processing Your Payment Securely...
+          </motion.p>
+        </motion.div>
       )}
     </>
   );

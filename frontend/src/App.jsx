@@ -6,14 +6,13 @@ import CustomerLogin from "./Pages/CustomerLogin";
 import Home from "./Pages/Home";
 import Overview from "./Components/Overview";
 import BookingConfirmation from "./Pages/BookingConfirmation";
-import Booking from "./Pages/Booking";
 import CustomerDashboard from "./Pages/CustomerDashboard";
 import ServicesPage from "./Pages/ServicesPage";
 import EventDetails from "./Pages/EventDetails";
 import BookingDetails from "./Pages/BookingDetails";
 import About from "./Pages/About";
 import Contact from "./Pages/Contact";
-import AdminDashboard from "./Pages/AdminDashboard"; // ✅ add this line
+import AdminDashboard from "./Pages/Admin/AdminDashboard"; // ✅ add this line
 
 function App() {
   return (
@@ -29,8 +28,8 @@ function App() {
       <Route path="/contact" element={<Contact />} />
 
       {/* ✅ Event / Booking */}
-      <Route path="/event/:slug" element={<EventDetails />} />
-      <Route path="/booking/:slug" element={<Booking />} />
+        <Route path="/event/:slug" element={<EventDetails />} />
+        {/* <Route path="/booking/:slug" element={<Booking />} /> */}
       <Route path="/confirmation" element={<BookingConfirmation />} />
       <Route path="/booking-details/:id" element={<BookingDetails />} />
 
