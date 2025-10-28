@@ -5,7 +5,7 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Navbar from "../Components/Navbar";
 
-// ✅ Import all images
+// ✅ Local fallback images
 import Birthday from "../assets/Cake.png";
 import Anniversary from "../assets/Anniversary.png";
 import BabyShower from "../assets/BabyShower.jpg";
@@ -15,25 +15,18 @@ import Graduation from "../assets/Graduation.jpg";
 import Theme from "../assets/Theme.jpg";
 import Wedding from "../assets/Wedding.jpg";
 
-// ✅ Unified service list (for fallback and image matching)
-const services = [
-  { title: "Anniversary", img: Anniversary, slug: "anniversary" },
-  { title: "Weddings", img: Wedding, slug: "weddings" },
-  { title: "Corporate Events", img: Corporate, slug: "corporate-events" },
-  { title: "Theme Parties", img: Theme, slug: "theme-parties" },
-  { title: "Baby Showers", img: BabyShower, slug: "baby-showers" },
-  { title: "Graduation", img: Graduation, slug: "graduation" },
-  { title: "Birthday Party", img: Birthday, slug: "birthday-party" },
-  { title: "Camping", img: Camping, slug: "camping" },
-];
+const serviceImages = {
+  anniversary: Anniversary,
+  weddings: Wedding,
+  "corporate-events": Corporate,
+  "theme-parties": Theme,
+  "baby-showers": BabyShower,
+  graduation: Graduation,
+  "birthday-party": Birthday,
+  camping: Camping,
+};
 
-// ✅ Generate image map dynamically
-const serviceImages = services.reduce((map, service) => {
-  map[service.slug.toLowerCase()] = service.img;
-  return map;
-}, {});
-
-// ✅ Helper: Load Razorpay script
+// ✅ Load Razorpay script
 const loadRazorpayScript = () =>
   new Promise((resolve) => {
     const script = document.createElement("script");
@@ -59,39 +52,46 @@ const EventDetails = () => {
     notes: "",
   });
 
-  // ✅ Fetch event details
+  // ✅ Fetch event details from backend
   useEffect(() => {
     const fetchEvent = async () => {
       try {
-        const res = await axios.get(
-          `http://localhost:5000/api/events/slug/${slug}`
-        );
+        const res = await axios.get(`http://localhost:5000/api/events/slug/${slug}`);
         if (res.data) {
-          const data = res.data;
+          const data = res.data.event || res.data; // supports {event: {...}} or {...}
+
+          // ✅ Construct full image URL safely
+          const imgUrl = data.image
+            ? data.image.startsWith("http")
+              ? data.image
+              : `http://localhost:5000/${data.image.replace(/\\/g, "/")}`
+            : serviceImages[data.slug?.toLowerCase()] || Birthday;
+
           setEvent({
             _id: data._id,
-            title: data.title,
-            price: data.price,
-            location: data.location,
+            title: data.title || "Untitled Event",
+            description: data.description || "No description available.",
+            location: data.location || "Not specified",
+            price: data.price || 0,
             date: data.date
               ? new Date(data.date).toISOString().split("T")[0]
               : "",
-            img: serviceImages[data.slug?.toLowerCase()] || Birthday, // ✅ fallback
-            description: data.description || "",
+            img: imgUrl,
           });
         }
       } catch (err) {
-        console.error("Fetch event failed:", err);
+        console.error("❌ Error fetching event:", err);
         toast.error("Event not found!");
       }
     };
+
     fetchEvent();
   }, [slug]);
 
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
-  // ✅ Booking + Payment Integration
+  // ✅ Razorpay payment and booking
   const handleBooking = async (e) => {
     e.preventDefault();
 
@@ -105,14 +105,12 @@ const EventDetails = () => {
       const scriptLoaded = await loadRazorpayScript();
       if (!scriptLoaded) return toast.error("Payment gateway failed to load!");
 
-      // ✅ Create Razorpay order
       const { data: order } = await axios.post(
         "http://localhost:5000/api/payment/order",
         { amount: event.price },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      // ✅ Configure Razorpay checkout
       const options = {
         key: "rzp_test_GycCn6vlLqKeUM",
         amount: order.amount,
@@ -122,7 +120,6 @@ const EventDetails = () => {
         order_id: order.id,
         handler: async function (response) {
           try {
-            // ✅ Verify payment on backend
             const verifyRes = await axios.post(
               "http://localhost:5000/api/payment/verify",
               {
@@ -134,7 +131,6 @@ const EventDetails = () => {
             );
 
             if (verifyRes.data.success) {
-              // ✅ Create booking after successful payment
               await axios.post(
                 "http://localhost:5000/api/bookings",
                 {
@@ -152,7 +148,7 @@ const EventDetails = () => {
                 { headers: { Authorization: `Bearer ${token}` } }
               );
 
-              toast.success("🎉 Booking confirmed & payment successful!");
+              toast.success("🎉 Booking confirmed successfully!");
               setShowForm(false);
               setTimeout(() => navigate("/dashboard"), 2000);
             } else {
@@ -174,7 +170,7 @@ const EventDetails = () => {
       const rzp = new window.Razorpay(options);
       rzp.open();
     } catch (err) {
-      console.error("Payment initiation failed:", err);
+      console.error("Payment initiation error:", err);
       toast.error("Something went wrong during payment!");
     } finally {
       setLoading(false);
@@ -205,9 +201,14 @@ const EventDetails = () => {
           <h1 className="text-4xl font-bold text-indigo-600 mb-3">
             {event.title}
           </h1>
+
           <p className="text-gray-700 mb-4 text-lg">{event.description}</p>
-          <p className="text-indigo-500 mb-2 text-lg">📍 {event.location}</p>
-          <p className="text-indigo-500 mb-2 text-lg">💰 ₹{event.price}</p>
+          <p className="text-indigo-500 mb-2 text-lg">
+            📍 Location: {event.location}
+          </p>
+          <p className="text-indigo-500 mb-6 text-lg">
+            💰 Price: ₹{event.price}
+          </p>
 
           <button
             onClick={() => setShowForm(true)}

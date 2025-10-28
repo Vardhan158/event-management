@@ -56,10 +56,16 @@ exports.createEvent = async (req, res) => {
 // ✅ Get all events
 exports.getAllEvents = async (req, res) => {
   try {
-    const events = await Event.find().sort({ createdAt: -1 });
-    res.json({ success: true, events });
-  } catch (err) {
-    res.status(500).json({ message: "Server error", error: err.message });
+    const events = await Event.find();
+
+    if (!events || events.length === 0) {
+      return res.status(200).json([]); // ✅ Always return an array
+    }
+
+    res.status(200).json(events);
+  } catch (error) {
+    console.error("Error fetching events:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };
 

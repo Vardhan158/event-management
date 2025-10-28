@@ -4,16 +4,14 @@ const { authenticate } = require("../middlewares/authMiddleware");
 const { adminOnly } = require("../middlewares/adminMiddleware");
 const eventController = require("../controllers/eventController");
 
-// Event CRUD routes
-
 // ✅ Create event (admin only)
 router.post("/", authenticate, adminOnly, eventController.createEvent);
 
-// ✅ Optional: Get event by slug (public) - placed before /:id to avoid conflicts
-router.get("/slug/:slug", eventController.getEventBySlug);
-
 // ✅ Get all events (public)
-router.get("/:id", eventController.getAllEvents);
+router.get("/", eventController.getAllEvents);
+
+// ✅ Get event by slug (optional public)
+router.get("/slug/:slug", eventController.getEventBySlug);
 
 // ✅ Get event by ID (public)
 router.get("/:id", eventController.getEventById);
