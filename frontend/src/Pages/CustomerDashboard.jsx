@@ -155,8 +155,8 @@ const CustomerDashboard = () => {
   const bookedCount = bookings.filter(
     (b) => b.status?.toLowerCase() === "booked"
   ).length;
-  const completedCount = bookings.filter(
-    (b) => b.status?.toLowerCase() === "completed"
+  const confirmedCount = bookings.filter(
+    (b) => b.status?.toLowerCase() === "confirmed"
   ).length;
 
   return (
@@ -242,9 +242,9 @@ const CustomerDashboard = () => {
                 </div>
                 <div className="text-center">
                   <p className="text-3xl font-bold text-green-500">
-                    {completedCount}
+                    {confirmedCount}
                   </p>
-                  <p className="text-gray-600">Completed</p>
+                  <p className="text-gray-600">Confirmed</p>
                 </div>
               </div>
             </div>

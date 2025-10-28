@@ -3,6 +3,7 @@ import axios from "axios";
 import { motion } from "framer-motion";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import ConfirmModal from "../Components/ConfirmModal";
 
 // 🔹 Animation Variants
 const fadeInUp = {
@@ -18,6 +19,7 @@ const AdminDashboard = () => {
     bookings: 0,
     payments: 0,
   });
+  
   const [users, setUsers] = useState([]);
   const [events, setEvents] = useState([]);
   const [bookings, setBookings] = useState([]);

@@ -10,7 +10,7 @@ router.post("/",authenticate,  addReview);
 router.get("/:id", getEventReviews);
 
 // Get reviews by event ID (public or user)
-// router.get("/event/:eventId", reviewController.getReviewsByEvent);
+router.get("/event/:eventId", getEventReviews);
 
 // // Delete a review (admin only)
 // router.delete("/:id", authenticate, adminOnly, reviewController.deleteReview);
